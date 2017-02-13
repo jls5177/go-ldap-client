@@ -139,8 +139,8 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 	searchRequest := ldap.NewSearchRequest(
 		lc.Base,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf(lc.GroupFilter, username),
-		[]string{"cn"}, // can it be something else than "cn"?
+		fmt.Sprintf(lc.UserFilter, username),
+		[]string{"memberOf"}, // can it be something else than "cn"?
 		nil,
 	)
 	sr, err := lc.Conn.Search(searchRequest)
@@ -149,7 +149,9 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 	}
 	groups := []string{}
 	for _, entry := range sr.Entries {
-		groups = append(groups, entry.GetAttributeValue("cn"))
+		for _, group := range entry.GetAttributeValues("memberOf") {
+			groups = append(groups, group)
+		}
 	}
 	return groups, nil
 }
